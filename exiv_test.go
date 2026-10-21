@@ -1,13 +1,15 @@
 package goexiv_test
 
 import (
-	"github.com/kolesa-team/goexiv"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
+	"os"
 	"runtime"
 	"sync"
 	"testing"
+
+	"github.com/kolesa-team/goexiv"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOpenImage(t *testing.T) {
@@ -579,4 +581,61 @@ func initializeImage(path string, t *testing.T) {
 		err = img.SetExifString(k, v)
 		require.NoError(t, err, k, v)
 	}
+}
+
+func TestXmpIterator(t *testing.T) {
+	img, err := goexiv.Open("testdata/pixel_xmp.jpg")
+	assert.NoError(t, err)
+	assert.NoError(t, img.ReadMetadata())
+
+	data := img.GetXmpData()
+	tags := data.AllTags()
+	assert.Equal(t, "image/jpeg", tags["Xmp.dc.format"])
+	assert.Len(t, tags, 4)
+
+	datum, err := data.FindKey("Xmp.dc.subject")
+	assert.NoError(t, err)
+	assert.Equal(t, "Xmp.dc.subject", datum.Key())
+	assert.Equal(t, []string{"one", "two"}, datum.Values())
+
+	datum, err = data.FindKey("Xmp.dc.creator")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"Alice", "Bob"}, datum.Values())
+	assert.Equal(t, "Alice, Bob", datum.String())
+
+	datum, err = data.FindKey("Xmp.dc.title")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{`lang="x-default" A title`, `lang="de-DE" Ein Titel`}, datum.Values())
+
+	datum, err = data.FindKey("Xmp.dc.format")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"image/jpeg"}, datum.Values())
+	runtime.KeepAlive(img)
+}
+
+func TestExiftoolTags(t *testing.T) {
+	const file = "testdata/canon-r5m2.cr3"
+	if _, err := os.Stat(file); err != nil {
+		t.Skip("sample file not available")
+	}
+
+	img, err := goexiv.Open(file)
+	assert.NoError(t, err)
+	assert.NoError(t, img.ReadMetadata())
+
+	raw := img.GetExifData().ExiftoolTags(false)
+	assert.Equal(t, "2", raw["Canon:MacroMode"])
+	assert.Equal(t, "1", raw["Canon:FocusMode"])
+	// a single exiv2 datum, listed as three tags by exiftool
+	assert.Equal(t, "105", raw["Canon:MaxFocalLength"])
+	assert.Equal(t, "24", raw["Canon:MinFocalLength"])
+	assert.NotContains(t, raw, "Exif.CanonCs.Macro")
+	// standard tags are untouched
+	assert.Equal(t, "Canon", raw["Exif.Image.Make"])
+
+	printed := img.GetExifData().ExiftoolTags(true)
+	assert.Equal(t, "Normal", printed["Canon:MacroMode"])
+	assert.Equal(t, "AI Servo AF", printed["Canon:FocusMode"])
+	assert.Equal(t, "CR3+JPEG", printed["Canon:RecordMode"])
+	runtime.KeepAlive(img)
 }
