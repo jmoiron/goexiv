@@ -4,11 +4,13 @@
 #include <exiv2/error.hpp>
 
 #include <stdio.h>
+#include <string.h>
+#include <utility>
 
 #define DEFINE_STRUCT(name,wrapped_type,member_name) \
 struct _##name { \
 	_##name(wrapped_type member_name) \
-		: member_name(member_name) {} \
+		: member_name(std::move(member_name)) {} \
 	wrapped_type member_name; \
 };
 
@@ -19,7 +21,7 @@ void name##_free(type x) \
 }
 
 DEFINE_STRUCT(Exiv2ImageFactory, Exiv2::ImageFactory*, factory);
-DEFINE_STRUCT(Exiv2Image, Exiv2::Image::AutoPtr, image);
+DEFINE_STRUCT(Exiv2Image, Exiv2::Image::UniquePtr, image);
 
 DEFINE_STRUCT(Exiv2XmpData, const Exiv2::XmpData&, data);
 DEFINE_STRUCT(Exiv2XmpDatum, const Exiv2::Xmpdatum&, datum);
@@ -57,7 +59,7 @@ struct _Exiv2Error {
 };
 
 _Exiv2Error::_Exiv2Error(const Exiv2::Error &error)
-	: code(error.code())
+	: code(static_cast<int>(error.code()))
 	, what(strdup(error.what()))
 {
 }
@@ -119,7 +121,7 @@ exiv2_image_set_exif_string(Exiv2Image *img, char *key, char *value, Exiv2Error 
 
 	try {
 	    Exiv2::Exifdatum& tag = exifData[key];
-		Exiv2::Value::AutoPtr valueObject = Exiv2::Value::create(Exiv2::asciiString);
+		Exiv2::Value::UniquePtr valueObject = Exiv2::Value::create(Exiv2::asciiString);
 		valueObject->read(value);
 		tag.setValue(valueObject.get());
 
@@ -139,7 +141,7 @@ exiv2_image_set_exif_short(Exiv2Image *img, char *key, char *value, Exiv2Error *
 
 	try {
 		Exiv2::Exifdatum& tag = exifData[key];
-		Exiv2::Value::AutoPtr valueObject = Exiv2::Value::create(Exiv2::unsignedShort);
+		Exiv2::Value::UniquePtr valueObject = Exiv2::Value::create(Exiv2::unsignedShort);
 		valueObject->read(value);
 		tag.setValue(valueObject.get());
 
@@ -178,7 +180,7 @@ exiv2_image_set_iptc_short(Exiv2Image *img, char *key, char *value, Exiv2Error *
 
     try {
         Exiv2::Iptcdatum& tag = iptcData[key];
-        Exiv2::Value::AutoPtr valueObject = Exiv2::Value::create(Exiv2::unsignedShort);
+        Exiv2::Value::UniquePtr valueObject = Exiv2::Value::create(Exiv2::unsignedShort);
         valueObject->read(value);
         tag.setValue(valueObject.get());
 
@@ -217,7 +219,7 @@ int exiv2_image_get_pixel_height(Exiv2Image *img) {
 const unsigned char* exiv2_image_icc_profile(Exiv2Image *img)
 {
 	if (img->image->iccProfileDefined()) {
-		return img->image->iccProfile()->pData_;
+		return img->image->iccProfile().c_data();
 	}
 	return NULL;
 }
@@ -225,7 +227,7 @@ const unsigned char* exiv2_image_icc_profile(Exiv2Image *img)
 long exiv2_image_icc_profile_size(Exiv2Image *img)
 {
 	if (img->image->iccProfileDefined()) {
-		return img->image->iccProfile()->size_;
+		return img->image->iccProfile().size();
 	}
 	return 0;
 }

@@ -1,22 +1,22 @@
-[![Build Status](https://api.travis-ci.org/kolesa-team/goexiv.svg)](https://api.travis-ci.org/kolesa-team/goexiv.svg)
-
 # Go bindings for exiv2 (http://www.exiv2.org)
+
+Note: This is a fork of [github.com/kolesa-team/goexiv](https://github.com/kolesa-team/goexiv) that makes
+it compatible with newer versions (0.28.x) of exiv2. See the `Requirements` section for changes.
 
 The library allows reading and writing EXIF and IPTC metadata to/from JPG, WEBP, and PNG images.
 
-It is based on https://github.com/abustany/goexiv and https://github.com/gitschneider/goexiv with support added for writing the metadata and various bugfixes.
-
-Библиотека для записи и чтения метаданных EXIF и IPTC в изображениях формата JPG, WEBP и PNG.
-Основана на https://github.com/abustany/goexiv и https://github.com/gitschneider/goexiv с добавленной фукнциональностью для записи метаданных и исправлением ошибок.
+It is based on https://github.com/abustany/goexiv and https://github.com/gitschneider/goexiv with support added for writing metadata and various bugfixes.
 
 ## Requirements
 
-A [libexiv2](http://www.exiv2.org) library v0.27 is required (this might also work with newer versions, but it hasn't been tested).
+A [libexiv2](http://www.exiv2.org) library v0.28.x is required. Older versions (0.27 and earlier) are not supported.
 
-On Ubuntu, libexiv2 can be installed from the package manager (`sudo apt install libexiv2-dev`), but there is no guarantee it comes with the version needed.
-So it is safer to install it manually:
+Building also requires a C++17 compiler (e.g. GCC 8+ or Clang 5+), which is itself a requirement of exiv2 0.28. The cgo build passes `-std=c++17` automatically.
 
-* Download and unpack the library from `https://github.com/Exiv2/exiv2/releases/tag/v0.27.2`
+On Ubuntu and Debian, libexiv2 0.28 can be installed from the package manager (`sudo apt install libexiv2-dev`); check the installed version with `pkg-config --modversion exiv2`.
+If your distribution ships an older version, build exiv2 manually:
+
+* Download and unpack the library from `https://github.com/Exiv2/exiv2/releases` (any v0.28.x release)
 * Install the library (the steps are taken from libexiv2 README):
     ```
     mkdir build && cd build
@@ -30,7 +30,7 @@ So it is safer to install it manually:
 Now the Go code in this project can interface with the libexiv2 library.
 
 The installation process for other operating systems should be similar.
-Also, this library is tested with `golang:1.13-alpine` docker image, where the correct version of libexiv2 is installed with `apk --update add exiv2-dev`.
+On Alpine, libexiv2 can be installed with `apk --update add exiv2-dev` (make sure the packaged version is 0.28.x).
 
 ## Usage
 

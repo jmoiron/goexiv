@@ -36,8 +36,8 @@ func TestOpenImage(t *testing.T) {
 		t.Fatalf("Returned error is not of type Error")
 	}
 
-	if exivErr.Code() != 9 {
-		t.Fatalf("Unexpected error code (expected 9, got %d)", exivErr.Code())
+	if exivErr.Code() != 10 {
+		t.Fatalf("Unexpected error code (expected 10, got %d)", exivErr.Code())
 	}
 }
 
@@ -62,7 +62,7 @@ func Test_OpenBytesFailures(t *testing.T) {
 			"no image",
 			[]byte("no image"),
 			"Failed to read input data",
-			20,
+			21,
 		},
 		{
 			"empty byte slice",
@@ -171,7 +171,7 @@ func TestMetadata(t *testing.T) {
 		"Iptc.Application2.Copyright":   "this is the copy, right?",
 		"Iptc.Application2.CountryName": "Lancre",
 		"Iptc.Application2.DateCreated": "2012-10-13",
-		"Iptc.Application2.TimeCreated": "12:49:32+01:00",
+		"Iptc.Application2.TimeCreated": "124932:0100",
 	}, iptcData.AllTags())
 }
 

@@ -1,6 +1,7 @@
 package goexiv
 
 // #cgo pkg-config: exiv2
+// #cgo CXXFLAGS: -std=c++17
 // #include "helper.h"
 // #include <stdlib.h>
 import "C"
